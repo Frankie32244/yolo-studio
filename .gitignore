@@ -1,0 +1,18 @@
+# Local dependencies and runtime data
+.venv/
+venv/
+**/node_modules/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.yolo-config/
+data/
+runs/
+.env
+.env.*
+!.env.example
+*.log
+*.pt
+!yolov8n.pt
+.DS_Store
+Thumbs.db

@@ -1,0 +1,14 @@
+services:
+  yolo-web:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - yolo-data:/app/data
+    environment:
+      YOLO_DEVICE: cpu
+      MAX_UPLOAD_MB: "200"
+      MAX_VIDEO_SECONDS: "300"
+    restart: unless-stopped
+volumes:
+  yolo-data:

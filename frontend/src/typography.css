@@ -1,0 +1,96 @@
+/* Readable UI copy at normal browser zoom, including compact layouts. */
+.panel-heading h2 { font-size: 18px; }
+.step { font-size: 12px; }
+.panel-subtitle { font-size: 11px; }
+.sidebar-note { font-size: 14px; color: #58667d; }
+.sidebar-note p { font-size: 14px; color: #738096; line-height: 1.9; }
+.nav-caption, .history-head { font-size: 14px; color: #738096; }
+.nav-item { font-size: 15px; }
+.history-select b { font-size: 14px; max-width: 136px; }
+.history-select small { font-size: 12px; }
+.history-empty { font-size: 12px; }
+.sidebar-bottom { font-size: 12px; }
+.sidebar-bottom small { font-size: 11px; }
+.preview-toolbar { font-size: 13px; color: #738096; height: auto; min-height: 26px; }
+.toggle { font-size: 12px; }
+.tabs button { font-size: 14px; }
+.dropzone strong { font-size: 15px; }
+.dropzone > span:not(.upload-icon) { font-size: 12px; color: #7b879b; }
+.dropzone small { font-size: 11px; color: #7b879b; }
+.parameter-heading h3 { font-size: 14px; }
+.parameter-heading > span { font-size: 12px; }
+.parameter label, .parameter label span { font-size: 13px; }
+.parameter p { font-size: 13px; color: #7b879b; line-height: 1.7; }
+.start-button { font-size: 15px; }
+.local-note { font-size: 11px; color: #8792a5; line-height: 1.7; }
+.stats span { font-size: 12px; color: #7b879b; }
+.stats small { font-size: 12px; }
+.result-footer > span { font-size: 12px; color: #7b879b; line-height: 1.6; }
+.download-button { font-size: 12px; }
+.status-pill { font-size: 12px; }
+.class-chips > span { font-size: 14px; }
+table { font-size: 14px; }
+th { font-size: 13px; color: #738096; }
+td, th { padding: 13px; }
+.coordinates { font-size: 13px; }
+.class-chips p, .detail-note { font-size: 13px; color: #7b879b; }
+.preview-empty h3 { font-size: 16px; }
+.preview-empty p { font-size: 13px; line-height: 1.8; }
+.empty-tags { font-size: 11px; }
+.processing-overlay strong { font-size: 15px; }
+.processing-overlay > span { font-size: 13px; }
+.guide-row h3 { font-size: 14px; }
+.guide-row p { font-size: 12px; }
+.guide-row span { font-size: 10px; }
+@media (max-width: 1200px) {
+  .result-footer { gap: 12px; }
+  .preview-toolbar { flex-wrap: wrap; }
+}
+@media (min-width: 741px) and (max-width: 960px) {
+  .nav-item { font-size: 0; }
+}
+@media (max-width: 740px) {
+  .panel-heading h2 { font-size: 18px; }
+  .details .panel-subtitle { font-size: 10px; }
+  .guide-row { flex-wrap: wrap; }
+  .guide-row > div { min-width: 120px; }
+  .table-scroll { overflow-x: auto; }
+  table { min-width: 470px; }
+}
+
+/* Compact sidebar after removing the introductory copy. */
+.sidebar > .nav-item { margin-top: 36px; }
+.history-head { margin-top: 24px; }
+main > footer { margin-top: 24px; }
+
+/* The brand and breadcrumb share one 70px header row. */
+.sidebar { padding-top: 0; }
+.brand {
+  height: 70px;
+  min-height: 70px;
+  margin: 0 -20px;
+  padding: 0 20px;
+  border-bottom: 1px solid #e8ebf0;
+}
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #6485ff, #3e55d5);
+  box-shadow: 0 4px 10px #4265e826, inset 0 1px 0 #ffffff35;
+}
+.brand-icon svg { width: 28px; height: 28px; }
+.nav-vision-mark { width: 21px; height: 21px; flex-shrink: 0; --mark-highlight: #edf2ff; }
+main > footer { font-size: 14px; color: #7b879b; line-height: 1.7; gap: 16px; }
+footer a { font-size: 13px; }
+footer a svg { width: 15px; height: 15px; }
+@media (min-width: 741px) and (max-width: 960px) {
+  .brand { margin: 0 -14px; padding: 0 14px; }
+}
+@media (max-width: 740px) {
+  .sidebar { padding: 0 20px; }
+  .brand { height: 64px; min-height: 64px; border-bottom: 0; }
+  main > footer { flex-wrap: wrap; font-size: 13px; }
+  footer a { font-size: 12px; }
+}
