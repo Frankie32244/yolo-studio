@@ -3,6 +3,11 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VisionMark from './VisionMark.vue'
 import { ScanLine, Image, Film, UploadCloud, ArrowUpRight, Download, Check, LoaderCircle, SlidersHorizontal, ChevronRight, Clock3, Trash2, AlertCircle, Layers, Box, RefreshCw } from 'lucide-vue-next'
 
+const BROWSER = import.meta.env.VITE_BROWSER_MODE === 'true'
+let browserClient
+const browserApi = async () => browserClient ||= await import('./browser/api.js')
+const artifactLink = url => BROWSER ? url : url + '?download=true'
+async function cancelTask() { if (BROWSER && active.value) (await browserApi()).cancel(active.value.id) }
 const mode = ref('image'), file = ref(null), preview = ref(''), drag = ref(false)
 const confidence = ref(0.25), iou = ref(0.45), jobs = ref([]), selected = ref(null)
 const health = ref(null), error = ref(''), sending = ref(false), uploadProgress = ref(0)
@@ -17,6 +22,7 @@ const labels = { queued: '排队中', running: '检测中', completed: '已完�
 const formats = computed(() => mode.value === 'image' ? '.jpg,.jpeg,.png,.webp,.bmp' : '.mp4,.mov,.avi,.mkv,.webm')
 const sizeText = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : (n / 1024).toFixed(0) + ' KB'
 async function api(url, options) {
+  if (BROWSER) return (await browserApi()).request(url, options)
   const response = await fetch(url, options)
   if (!response.ok) {
     let data
@@ -60,6 +66,15 @@ function selectJob(job) {
 async function submit() {
   if (!file.value || sending.value) return
   sending.value = true; error.value = ''; uploadProgress.value = 0
+  if (BROWSER) {
+    try {
+      const job = (await browserApi()).submit(file.value, confidence.value, iou.value)
+      jobs.value = [job, ...jobs.value]; selected.value = job.id
+      await refresh()
+    } catch (e) { error.value = e.message }
+    finally { sending.value = false }
+    return
+  }
   const data = new FormData()
   data.append('file', file.value); data.append('confidence', confidence.value); data.append('iou', iou.value)
   try {
@@ -95,7 +110,7 @@ onUnmounted(() => { destroyed = true; clearInterval(timer); xhr?.abort(); clearP
 <template>
   <div class="shell">
     <aside class="sidebar">
-      <a class="brand" href="/" aria-label="YOLO Studio 首页"><span class="brand-icon"><VisionMark /></span><span>YOLO<span class="brand-light"> Studio</span></span></a>
+      <a class="brand" :href="BROWSER ? './' : '/'" aria-label="YOLO Studio 首页"><span class="brand-icon"><VisionMark /></span><span>YOLO<span class="brand-light"> Studio</span></span></a>
       <button class="nav-item active" @click="changeMode('image')"><VisionMark class="nav-vision-mark" />视觉检测<span class="nav-count">01</span></button>
       <div class="history-head"><span>最近任务</span><button class="icon-button" @click="refresh" aria-label="刷新任务"><RefreshCw :size="14" /></button></div>
       <div class="history">
@@ -109,9 +124,9 @@ onUnmounted(() => { destroyed = true; clearInterval(timer); xhr?.abort(); clearP
     </aside>
 
     <div class="workspace">
-      <header class="topbar"><div>工作空间 <ChevronRight :size="14" /><strong>视觉检测</strong></div><span class="connection"><span class="tiny-dot" :class="{ offline: !health }"></span>{{ health ? '服务已连接' : '正在连接服务' }}</span></header>
+      <header class="topbar"><div>工作空间 <ChevronRight :size="14" /><strong>视觉检测</strong></div><span class="connection"><span class="tiny-dot" :class="{ offline: !health }"></span>{{ BROWSER ? '浏览器本地检测 · 文件不上传' : health ? '服务已连接' : '正在连接服务' }}</span></header>
       <main>
-        <div class="page-title"><div><div class="eyebrow">SEE MORE. UNDERSTAND MORE.</div><h1>每一帧，都有发现<span>。</span></h1><p>上传图片或视频，让 YOLO 为你识别画面中的目标。</p></div><span class="version"><Layers :size="14" /> YOLO WORKSPACE / 1.0</span></div>
+        <div class="page-title"><div><div class="eyebrow">SEE MORE. UNDERSTAND MORE.</div><h1>每一帧，都有发现<span>。</span></h1><p>{{ BROWSER ? '免费在线体验 · 首次检测加载模型 · 图片和视频仅在你的设备处理。' : '上传图片或视频，让 YOLO 为你识别画面中的目标。' }}</p></div><span class="version"><Layers :size="14" /> {{ BROWSER ? 'BROWSER EDITION / 1.1' : 'YOLO WORKSPACE / 1.1' }}</span></div>
 
         <div class="work-grid">
           <section class="input-panel panel">
@@ -124,8 +139,9 @@ onUnmounted(() => { destroyed = true; clearInterval(timer); xhr?.abort(); clearP
             <div class="parameter-heading"><SlidersHorizontal :size="16" /><h3>检测参数</h3><span>自定义</span></div>
             <div class="parameter"><label for="confidence">置信度阈值 <span>{{ Number(confidence).toFixed(2) }}</span></label><input id="confidence" v-model.number="confidence" type="range" min="0.01" max="1" step="0.01" :disabled="sending" /><p>数值越高，保留的检测结果越可信。</p></div>
             <div class="parameter"><label for="iou">IoU 阈值 <span>{{ Number(iou).toFixed(2) }}</span></label><input id="iou" v-model.number="iou" type="range" min="0.01" max="1" step="0.01" :disabled="sending" /><p>控制重叠检测框的过滤程度。</p></div>
-            <button class="start-button" :disabled="!file || sending || !health" @click="submit"><LoaderCircle v-if="sending" class="spin" :size="18" /><ScanLine v-else :size="18" />{{ sending ? `正在上传 ${uploadProgress}%` : '开始检测' }}<ArrowUpRight v-if="!sending" :size="17" /></button>
-            <p class="local-note">文件在本地服务处理 · 完成后可删除记录</p>
+            <button class="start-button" :disabled="!file || sending || !health" @click="submit"><LoaderCircle v-if="sending" class="spin" :size="18" /><ScanLine v-else :size="18" />{{ sending ? (BROWSER ? '正在准备本地检测' : `正在上传 ${uploadProgress}%`) : '开始检测' }}<ArrowUpRight v-if="!sending" :size="17" /></button>
+            <button v-if="BROWSER && busy && !sending" class="cancel-button" @click="cancelTask">取消当前检测</button>
+            <p class="local-note">{{ BROWSER ? '文件不上传 · 记录仅保留在当前页面，刷新后清空' : '文件在本地服务处理 · 完成后可删除记录' }}</p>
           </section>
 
           <section class="result-panel panel">
@@ -139,12 +155,12 @@ onUnmounted(() => { destroyed = true; clearInterval(timer); xhr?.abort(); clearP
               <span v-if="summary && !showOriginal" class="preview-badge"><ScanLine :size="12" /> YOLO DETECTION</span>
             </div>
             <div class="stats"><div><span>检测目标{{ active?.kind === 'video' ? '（逐帧累计）' : '' }}</span><strong>{{ summary?.num_detections ?? '—' }}<small>个</small></strong></div><div><span>识别类别</span><strong>{{ summary ? Object.keys(summary.class_counts).length : '—' }}<small>类</small></strong></div><div><span>{{ active?.kind === 'video' ? '平均单帧推理' : '推理耗时' }}</span><strong>{{ summary?.inference_time_ms ?? '—' }}<small>ms</small></strong></div></div>
-            <div class="result-footer"><span><Check :size="14" /> {{ summary ? '检测已完成，结果可下载' : '完成检测后可下载标注文件和 JSON' }}</span><div><a v-if="summary" class="download-button" :href="active.json_url + '?download=true'"><Download :size="14" />JSON</a><a v-if="summary" class="download-button primary" :href="active.result_url + '?download=true'"><Download :size="14" />{{ active.kind === 'image' ? '标注图片' : '标注视频' }}</a></div></div>
+            <div class="result-footer"><span><Check :size="14" /> {{ summary ? '检测已完成，结果可下载' : '完成检测后可下载标注文件和 JSON' }}</span><div><a v-if="summary" class="download-button" :href="artifactLink(active.json_url)" download="detections.json"><Download :size="14" />JSON</a><a v-if="summary" class="download-button primary" :href="artifactLink(active.result_url)" :download="active.result_filename || (active.kind === 'image' ? 'result.jpg' : 'result.mp4')"><Download :size="14" />{{ active.kind === 'image' ? '标注图片' : '标注视频' }}</a></div></div>
           </section>
         </div>
 
         <div v-if="error || active?.error" class="error-banner" role="alert"><AlertCircle :size="18" />{{ error || active.error }}</div>
-        <section v-if="summary" class="panel details"><div class="panel-heading"><span class="step">03</span><h2>识别详情</h2><span class="panel-subtitle">{{ active.kind === 'video' ? '逐帧完整坐标请下载 JSON' : 'BOUNDING BOXES' }}</span></div><div class="class-chips"><span v-for="(count, label) in summary.class_counts" :key="label">{{ label }} <b>{{ count }}</b></span><p v-if="!Object.keys(summary.class_counts).length">未发现符合阈值的目标，可降低置信度后重新检测。</p></div><div v-if="summary.detections?.length" class="table-scroll"><table><thead><tr><th>目标类别</th><th>置信度</th><th>检测框坐标 [x1, y1, x2, y2]</th></tr></thead><tbody><tr v-for="(item,index) in summary.detections" :key="index"><td><span class="table-dot"></span>{{ item.label }}</td><td>{{ (item.confidence * 100).toFixed(1) }}%</td><td class="coordinates">{{ item.bbox.join(', ') }}</td></tr></tbody></table></div><p class="detail-note">{{ active.kind === 'video' ? '目标数为所有帧的检测框累计数，不代表独立对象数量。输出视频不含音轨。' : '坐标单位为像素，原点位于左上角；图片按 EXIF 方向校正后检测。' }} 本次使用 confidence={{ active.confidence }}，IoU={{ active.iou }}。</p></section>
+        <section v-if="summary" class="panel details"><div class="panel-heading"><span class="step">03</span><h2>识别详情</h2><span class="panel-subtitle">{{ active.kind === 'video' ? '逐帧完整坐标请下载 JSON' : 'BOUNDING BOXES' }}</span></div><div class="class-chips"><span v-for="(count, label) in summary.class_counts" :key="label">{{ label }} <b>{{ count }}</b></span><p v-if="!Object.keys(summary.class_counts).length">未发现符合阈值的目标，可降低置信度后重新检测。</p></div><div v-if="summary.detections?.length" class="table-scroll"><table><thead><tr><th>目标类别</th><th>置信度</th><th>检测框坐标 [x1, y1, x2, y2]</th></tr></thead><tbody><tr v-for="(item,index) in summary.detections" :key="index"><td><span class="table-dot"></span>{{ item.label }}</td><td>{{ (item.confidence * 100).toFixed(1) }}%</td><td class="coordinates">{{ item.bbox.join(', ') }}</td></tr></tbody></table></div><p class="detail-note">{{ active.kind === 'video' ? (BROWSER ? '逐帧解码检测；累计框数不等于独立对象数。视频不含音轨，优先导出 MP4，兼容回退为 WebM。' : '目标数为所有帧的检测框累计数，不代表独立对象数量。输出视频不含音轨。') : '坐标单位为像素，原点位于左上角；图片按 EXIF 方向校正后检测。' }} 本次使用 confidence={{ active.confidence }}，IoU={{ active.iou }}。</p></section>
         <footer><span>YOLO Studio <span class="footer-divider">/</span> 看见画面背后的信息</span><a href="https://docs.ultralytics.com/models/yolov8/" target="_blank" rel="noreferrer">Powered by Ultralytics <ArrowUpRight :size="12" /></a></footer>
       </main>
     </div>

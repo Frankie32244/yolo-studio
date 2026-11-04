@@ -94,3 +94,5 @@ footer a svg { width: 15px; height: 15px; }
   main > footer { flex-wrap: wrap; font-size: 13px; }
   footer a { font-size: 12px; }
 }
+
+.cancel-button { width:100%; margin-top:12px; padding:10px; border:1px solid #e0e6f3; border-radius:6px; background:#fff; color:#738096; font-size:13px; }

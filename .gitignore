@@ -16,3 +16,10 @@ runs/
 !yolov8n.pt
 .DS_Store
 Thumbs.db
+
+frontend/dist-pages/
+/yolov8n.onnx
+
+# Optional locally downloaded datasets and test videos
+/coco128/
+/test-videos/

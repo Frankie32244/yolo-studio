@@ -1,6 +1,10 @@
 # YOLO Studio
 
-**一个下载后可在本机启动的 YOLO 图片与视频目标检测网站。**
+**一个支持免费在线体验、也可下载本机运行的 YOLO 图片与视频目标检测网站。**
+
+🌐 **[在线体验](https://Frankie32244.github.io/yolo-studio/)** · 📦 **[下载 Release](https://github.com/Frankie32244/yolo-studio/releases)**
+
+在线版无需安装 Python，图片与视频在访客浏览器中处理、不上传到后端。首次检测需下载约 13 MB 模型和约 11 MB 推理引擎；推荐最新版桌面 Chrome / Edge。支持图片、视频逐帧检测与标注结果/JSON 下载。在线版限 50 MiB 文件、30 秒/1080p 视频，记录仅保留在当前页面，刷新后清空。完整说明见 [在线版与部署指南](docs/ONLINE.md)。
 
 Vue 3 + FastAPI + Ultralytics YOLOv8n，提供中文界面、检测框可视化、视频逐帧处理，以及标注文件与 JSON 下载。
 
